@@ -1,2 +1,2 @@
 # ssq
-spreadsheet query
+use sql to query spreadsheets
