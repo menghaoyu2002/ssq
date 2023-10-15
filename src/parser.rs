@@ -7,14 +7,16 @@ use nom::{
     IResult,
 };
 
-pub struct Filetype<'a> {
+#[derive(Debug)]
+pub struct FileInfo<'a> {
     pub path: &'a str,
     pub sheet: Option<&'a str>,
 }
 
+#[derive(Debug)]
 pub struct Query<'a> {
     pub columns: Vec<&'a str>,
-    pub file: Filetype<'a>,
+    pub file: FileInfo<'a>,
 }
 
 pub fn parse_query(input: &str) -> IResult<&str, Query> {
@@ -25,7 +27,7 @@ pub fn parse_query(input: &str) -> IResult<&str, Query> {
         remaining,
         Query {
             columns,
-            file: Filetype { path: table, sheet },
+            file: FileInfo { path: table, sheet },
         },
     ))
 }

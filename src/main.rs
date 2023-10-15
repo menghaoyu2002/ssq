@@ -5,7 +5,7 @@ use std::{
 
 use clap::Parser;
 use colored::Colorize;
-use executor::execute::execute_query;
+use executor::execute_query;
 use filetypes::FileType;
 use parser::parse_query;
 

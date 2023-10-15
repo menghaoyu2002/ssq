@@ -1,5 +1,6 @@
 use core::fmt;
 
+#[derive(Debug)]
 pub enum MultiSheetFileType {
     ODS,
     XLA,
@@ -10,6 +11,7 @@ pub enum MultiSheetFileType {
     XLSX,
 }
 
+#[derive(Debug)]
 pub enum SingleSheetFileType {
     CSV,
 }
