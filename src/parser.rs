@@ -69,6 +69,6 @@ fn parse_columns(input: &str) -> IResult<&str, Vec<&str>> {
             tag(","),
             take_till(|c: char| c.is_alphanumeric()),
         )),
-        alphanumeric1,
+        alt((alphanumeric1, tag("*"))),
     )(input)
 }
