@@ -5,13 +5,13 @@ use std::{
 
 use clap::Parser;
 use colored::Colorize;
-use executor::execute_query;
+use executor::get_executor;
 use filetypes::FileType;
 use parser::parse_query;
 
 mod executor;
 mod filetypes;
-mod parser;
+pub mod parser;
 
 /// Run SQL queries on spreadsheets and outputs the result in JSON
 #[derive(Parser, Debug)]
@@ -36,9 +36,13 @@ fn main() {
         Some(query_string) => {
             let (_, query) = parse_query(&query_string).unwrap();
 
+            println!("{:?}", query);
+
             match FileType::parse_to_filetype(query.file.path.split(".").last()) {
                 Some(filetype) => {
-                    if matches!(&filetype, FileType::MultiSheetFiletype(_)) {
+                    if matches!(&filetype, FileType::MultiSheetFiletype(_))
+                        && query.file.sheet.is_none()
+                    {
                         println!(
                             "{} a sheet is required for {} files",
                             "error:".red().bold(),
@@ -47,7 +51,8 @@ fn main() {
                         exit(1);
                     }
 
-                    execute_query(&query, filetype);
+                    let executor = get_executor(&query.file.path, filetype);
+                    executor.execute_query(&query);
                 }
                 None => {
                     println!("{} unsupported filetype", "error:".red().bold());

@@ -56,13 +56,13 @@ impl FileType {
     pub fn parse_to_filetype(candidate: Option<&str>) -> Option<FileType> {
         match candidate?.to_lowercase().as_str() {
             "csv" => Some(FileType::SingleSheetFileType(SingleSheetFileType::CSV)),
+            "xlsx" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::XLSX)),
             "ods" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::ODS)),
             "xla" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::XLA)),
             "xlam" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::XLAM)),
             "xls" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::XLS)),
             "xlsb" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::XLSB)),
             "xlsm" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::XLSM)),
-            "xlsx" => Some(FileType::MultiSheetFiletype(MultiSheetFileType::XLSX)),
             _ => None,
         }
     }
