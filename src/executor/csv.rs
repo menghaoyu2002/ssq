@@ -31,7 +31,7 @@ impl Executor for CsvExecutor {
 
             for (i, header) in headers.iter().enumerate() {
                 if query.columns.contains(&header) {
-                    row.insert(header.to_string(), record[i].to_string());
+                    row.insert(header.to_string(), record[i].parse::<i32>().unwrap());
                 }
             }
 
