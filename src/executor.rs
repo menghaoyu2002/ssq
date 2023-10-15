@@ -6,7 +6,7 @@ mod csv;
 mod xlsx;
 
 pub trait Executor {
-    fn execute_query(&self, query: &Query);
+    fn execute_query(&mut self, query: &Query) -> Result<String, serde_json::Error>;
 }
 
 pub fn get_executor(path: &str, filetype: FileType) -> Box<dyn Executor> {

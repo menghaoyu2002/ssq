@@ -36,8 +36,6 @@ fn main() {
         Some(query_string) => {
             let (_, query) = parse_query(&query_string).unwrap();
 
-            println!("{:?}", query);
-
             match FileType::parse_to_filetype(query.file.path.split(".").last()) {
                 Some(filetype) => {
                     if matches!(&filetype, FileType::MultiSheetFiletype(_))
@@ -51,8 +49,16 @@ fn main() {
                         exit(1);
                     }
 
-                    let executor = get_executor(&query.file.path, filetype);
-                    executor.execute_query(&query);
+                    let mut executor = get_executor(&query.file.path, filetype);
+                    let data = executor.execute_query(&query);
+
+                    match data {
+                        Ok(data) => println!("{}", data),
+                        Err(e) => {
+                            println!("{} {}", "error:".red().bold(), e);
+                            exit(1);
+                        }
+                    }
                 }
                 None => {
                     println!("{} unsupported filetype", "error:".red().bold());

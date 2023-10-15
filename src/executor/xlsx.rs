@@ -27,5 +27,7 @@ impl XlsxExecutor {
 }
 
 impl Executor for XlsxExecutor {
-    fn execute_query(&self, query: &Query) {}
+    fn execute_query(&mut self, query: &Query) -> Result<String, serde_json::Error> {
+        Ok("yes".to_string())
+    }
 }
