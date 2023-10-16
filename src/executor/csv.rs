@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::File};
+use std::{collections::BTreeMap, fs::File};
 
 use crate::parser::Query;
 
@@ -23,11 +23,11 @@ impl Executor for CsvExecutor {
     fn execute_query(&mut self, query: &Query) -> Result<String, serde_json::Error> {
         let mut records = self.file.records();
         let headers = records.next().unwrap().unwrap();
-        let mut rows: Vec<HashMap<String, serde_json::Value>> = vec![];
+        let mut rows: Vec<BTreeMap<String, serde_json::Value>> = vec![];
 
         for record in records {
             let record = record.unwrap();
-            let mut row: HashMap<String, serde_json::Value> = HashMap::new();
+            let mut row: BTreeMap<String, serde_json::Value> = BTreeMap::new();
 
             for (i, header) in headers.iter().enumerate() {
                 if query.columns.contains(&header) {

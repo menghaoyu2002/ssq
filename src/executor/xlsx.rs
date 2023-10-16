@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::File, io::BufReader};
+use std::{collections::{HashMap, BTreeMap}, fs::File, io::BufReader};
 
 use crate::parser::Query;
 
@@ -78,10 +78,10 @@ impl Executor for XlsxExecutor {
 
         let mut iter = range.rows().into_iter();
         let headers = iter.next().unwrap();
-        let mut rows: Vec<HashMap<String, serde_json::Value>> = vec![];
+        let mut rows: Vec<BTreeMap<String, serde_json::Value>> = vec![];
 
         for row in iter {
-            let mut record: HashMap<String, serde_json::Value> = HashMap::new();
+            let mut record: BTreeMap<String, serde_json::Value> = BTreeMap::new();
             for (i, cell) in row.iter().enumerate() {
                 if query.columns.contains(&headers[i].to_string().as_str()) {
                     record.insert(headers[i].to_string(), cell.to_value());
