@@ -30,8 +30,8 @@ impl JsonValue for DataType {
     fn to_value(&self) -> serde_json::Value {
         match self {
             DataType::Empty => serde_json::Value::Null,
-            DataType::Int(i) => serde_json::Value::Number(serde_json::Number::from(*i)),
             DataType::Bool(b) => serde_json::Value::Bool(*b),
+            DataType::Int(i) => serde_json::Value::Number(serde_json::Number::from(*i)),
             DataType::Float(f) => {
                 serde_json::Value::Number(serde_json::Number::from_f64(*f).unwrap())
             },
