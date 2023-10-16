@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, BTreeMap}, fs::File, io::BufReader};
+use std::{collections::{HashMap, BTreeMap}, fs::File, io::BufReader, process::exit};
 
 use crate::parser::Query;
 
@@ -77,7 +77,22 @@ impl Executor for XlsxExecutor {
         }
 
         let mut iter = range.rows().into_iter();
-        let headers = iter.next().unwrap();
+        let headers = iter.next().unwrap().iter().map(|h| h.to_string()).collect::<Vec<String>>();
+
+
+        // verify that every column in the query exists in the sheet
+        for column in &query.columns {
+            if !headers.contains(&column.to_string()) {
+                eprintln!(
+                    "{} column '{}' does not exist in sheet '{}'",
+                    "error:".red().bold(),
+                    column,
+                    query.file.sheet.as_ref().unwrap()
+                );
+                exit(1);
+            }
+        }
+
         let mut rows: Vec<BTreeMap<String, serde_json::Value>> = vec![];
 
         for row in iter {

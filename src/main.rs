@@ -41,7 +41,7 @@ fn main() {
                     if matches!(&filetype, FileType::MultiSheetFiletype(_))
                         && query.file.sheet.is_none()
                     {
-                        println!(
+                        eprintln!(
                             "{} a sheet is required for {} files",
                             "error:".red().bold(),
                             filetype.to_string().bold()
@@ -55,19 +55,19 @@ fn main() {
                     match data {
                         Ok(data) => println!("{}", data),
                         Err(e) => {
-                            println!("{} {}", "error:".red().bold(), e);
+                            eprintln!("{} {}", "error:".red().bold(), e);
                             exit(1);
                         }
                     }
                 }
                 None => {
-                    println!("{} unsupported filetype", "error:".red().bold());
+                    eprintln!("{} unsupported filetype", "error:".red().bold());
                     exit(1)
                 }
             }
         }
         None => {
-            println!(
+            eprintln!(
                 "{} missing {} argument",
                 "error:".red().bold(),
                 "\'--query <QUERY>\'".yellow()

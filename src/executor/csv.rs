@@ -1,4 +1,6 @@
-use std::{collections::BTreeMap, fs::File};
+use std::{collections::BTreeMap, fs::File, process::exit};
+
+use colored::Colorize;
 
 use crate::parser::Query;
 
@@ -22,15 +24,30 @@ impl CsvExecutor {
 impl Executor for CsvExecutor {
     fn execute_query(&mut self, query: &Query) -> Result<String, serde_json::Error> {
         let mut records = self.file.records();
-        let headers = records.next().unwrap().unwrap();
+        let headers = records.next().unwrap().unwrap().iter().map(|s| s.to_string()).collect::<Vec<String>>();
+
+        // verify that all columns in the query exist in the spreadsheet
+        for column in &query.columns {
+            if !headers.contains(&column.to_string()) {
+                eprintln!(
+                    "{} column '{}' does not exist in file '{}'",
+                    "error:".red().bold(),
+                    column,
+                    query.file.path
+                );
+                exit(1);
+            }
+        }
+
         let mut rows: Vec<BTreeMap<String, serde_json::Value>> = vec![];
+
 
         for record in records {
             let record = record.unwrap();
             let mut row: BTreeMap<String, serde_json::Value> = BTreeMap::new();
 
             for (i, header) in headers.iter().enumerate() {
-                if query.columns.contains(&header) {
+                if query.columns.contains(&header.as_str()) {
                     row.insert(header.to_string(), to_json_value(&record[i]));
                 }
             }
