@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs::File, io::BufReader};
 
 use crate::parser::Query;
 
-use super::Executor;
+use super::{Executor, JsonValue};
 use calamine::{open_workbook, DataType, Range, Reader, Xlsx};
 use colored::Colorize;
 
@@ -22,6 +22,25 @@ impl XlsxExecutor {
         Self {
             workbook,
             tables: HashMap::new(),
+        }
+    }
+}
+
+impl JsonValue for DataType {
+    fn to_value(&self) -> serde_json::Value {
+        match self {
+            DataType::Empty => serde_json::Value::Null,
+            DataType::Int(i) => serde_json::Value::Number(serde_json::Number::from(*i)),
+            DataType::Bool(b) => serde_json::Value::Bool(*b),
+            DataType::Float(f) => {
+                serde_json::Value::Number(serde_json::Number::from_f64(*f).unwrap())
+            },
+            DataType::String(s) => serde_json::Value::String(s.to_string()),
+            DataType::DateTime(dt) => serde_json::Value::String(dt.to_string()),
+            DataType::Error(e) => serde_json::Value::String(e.to_string()),
+            DataType::Duration(d) => serde_json::Value::String(d.to_string()),
+            DataType::DateTimeIso(dt) => serde_json::Value::String(dt.to_string()),
+            DataType::DurationIso(d) => serde_json::Value::String(d.to_string()),
         }
     }
 }
@@ -59,16 +78,16 @@ impl Executor for XlsxExecutor {
 
         let mut iter = range.rows().into_iter();
         let headers = iter.next().unwrap();
-        let mut rows = vec![];
+        let mut rows: Vec<HashMap<String, serde_json::Value>> = vec![];
 
         for row in iter {
-            let mut record = HashMap::new();
+            let mut record: HashMap<String, serde_json::Value> = HashMap::new();
             for (i, cell) in row.iter().enumerate() {
                 if query.columns.contains(&headers[i].to_string().as_str()) {
-                    record.insert(headers[i].to_string(), cell.to_string());
+                    record.insert(headers[i].to_string(), cell.to_value());
                 }
             }
-            
+
             if record.len() > 0 {
                 rows.push(record);
             }
