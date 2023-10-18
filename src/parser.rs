@@ -2,9 +2,10 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, tag_no_case, take_till, take_until},
     character::complete::{alphanumeric1, multispace1},
+    combinator::{opt, verify},
     multi::separated_list1,
     sequence::tuple,
-    IResult,
+    Err, IResult,
 };
 
 #[derive(Debug)]
@@ -20,8 +21,8 @@ pub struct Query<'a> {
 }
 
 pub fn parse_query(input: &str) -> IResult<&str, Query> {
-    let (remaining, (_, columns, (_, _, _, table), sheet)) =
-        tuple((parse_select, parse_columns, parse_from, parse_sheet))(input).unwrap();
+    let (remaining, (_, columns, (table, sheet))) =
+        tuple((parse_select, parse_columns, parse_from))(input).unwrap();
 
     Ok((
         remaining,
@@ -33,15 +34,16 @@ pub fn parse_query(input: &str) -> IResult<&str, Query> {
 }
 
 fn parse_sheet(input: &str) -> IResult<&str, Option<&str>> {
-    match tuple((
+    let (remaining, sheet) = opt(tuple((
         multispace1,
         tag_no_case("SHEET"),
         multispace1,
         parse_until_next_keyword,
-    ))(input)
-    {
-        Ok((remaining, (_, _, _, s))) => Ok((remaining, Some(s))),
-        _ => Ok((input, None)),
+    )))(input)?;
+
+    match sheet {
+        Some((_, _, _, sheet)) => Ok((remaining, Some(sheet))),
+        None => Ok((remaining, None)),
     }
 }
 
@@ -49,13 +51,22 @@ fn parse_select(input: &str) -> IResult<&str, (&str, &str)> {
     tuple((tag_no_case("SELECT"), multispace1))(input)
 }
 
-fn parse_from(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
-    tuple((
+fn parse_from(input: &str) -> IResult<&str, (&str, Option<&str>)> {
+    let (remaining, (_, _, _, table)) = tuple((
         multispace1,
         tag_no_case("FROM"),
         multispace1,
         parse_until_next_keyword,
-    ))(input)
+    ))(input)?;
+
+    if table.split(".").last().unwrap() == "csv" {
+        verify(parse_sheet, |s| s.is_none())(remaining)?;
+
+        Ok((remaining, (table, None)))
+    } else {
+        let (remaining, sheet) = parse_sheet(remaining)?;
+        Ok((remaining, (table, sheet)))
+    }
 }
 
 fn parse_until_next_keyword(input: &str) -> IResult<&str, &str> {
