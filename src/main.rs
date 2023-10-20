@@ -35,7 +35,6 @@ fn main() {
     match optional_query_string {
         Some(query_string) => {
             let (_, query) = parse_query(&query_string).unwrap();
-            println!("{:?}", query);
 
             match FileType::parse_to_filetype(query.file.path.split(".").last()) {
                 Some(filetype) => {
@@ -53,13 +52,13 @@ fn main() {
                     let mut executor = get_executor(&query.file.path, filetype);
                     let data = executor.execute_query(&query);
 
-                    // match data {
-                    //     Ok(data) => println!("{}", data),
-                    //     Err(e) => {
-                    //         eprintln!("{} {}", "error:".red().bold(), e);
-                    //         exit(1);
-                    //     }
-                    // }
+                    match data {
+                        Ok(data) => println!("{}", data),
+                        Err(e) => {
+                            eprintln!("{} {}", "error:".red().bold(), e);
+                            exit(1);
+                        }
+                    }
                 }
                 None => {
                     eprintln!("{} unsupported filetype", "error:".red().bold());
