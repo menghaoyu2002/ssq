@@ -21,7 +21,7 @@ pub struct FileInfo<'a> {
 pub struct Query<'a> {
     pub columns: Vec<&'a str>,
     pub file: FileInfo<'a>,
-    pub conditions: LogicalExpression,
+    pub conditions: Option<LogicalExpression>,
 }
 
 #[derive(Debug)]
@@ -151,9 +151,20 @@ fn parse_columns(input: &str) -> IResult<&str, Vec<&str>> {
     )(input)
 }
 
-fn parse_where<'a>(input: &'a str, columns: &Vec<&str>) -> IResult<&'a str, LogicalExpression> {
-    let (remaining, (_, _)) = tuple((multispace1, tag_no_case("WHERE")))(input)?;
-    parse_conditions(remaining, columns)
+fn parse_where<'a>(
+    input: &'a str,
+    columns: &Vec<&str>,
+) -> IResult<&'a str, Option<LogicalExpression>> {
+    let (remaining, where_claus)= opt(tuple((multispace1, tag_no_case("WHERE"))))(input)?;
+
+    match where_claus {
+        Some((_, _)) => {
+            let (remaining, conditions) = parse_conditions(remaining, columns)?;
+            Ok((remaining, Some(conditions)))
+        }
+        None => Ok((remaining, None)),
+    }
+
 }
 
 fn parse_logical_operator(input: &str) -> IResult<&str, &str> {
