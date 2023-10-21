@@ -2,9 +2,9 @@ use std::{collections::BTreeMap, fs::File, process::exit};
 
 use colored::Colorize;
 
-use crate::parser::Query;
+use crate::parser::{LogicalExpression, Query};
 
-use super::Executor;
+use super::{str_to_json_value, Executor};
 
 pub struct CsvExecutor {
     file: csv::Reader<File>,
@@ -24,7 +24,13 @@ impl CsvExecutor {
 impl Executor for CsvExecutor {
     fn execute_query(&mut self, query: &Query) -> Result<String, serde_json::Error> {
         let mut records = self.file.records();
-        let headers = records.next().unwrap().unwrap().iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        let headers = records
+            .next()
+            .unwrap()
+            .unwrap()
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
 
         // verify that all columns in the query exist in the spreadsheet
         for column in &query.columns {
@@ -41,35 +47,31 @@ impl Executor for CsvExecutor {
 
         let mut rows: Vec<BTreeMap<String, serde_json::Value>> = vec![];
 
-
         for record in records {
             let record = record.unwrap();
             let mut row: BTreeMap<String, serde_json::Value> = BTreeMap::new();
+            let mut full_row: BTreeMap<String, serde_json::Value> = BTreeMap::new();
 
             for (i, header) in headers.iter().enumerate() {
+                full_row.insert(header.to_string(), str_to_json_value(&record[i]));
                 if query.columns.contains(&header.as_str()) {
-                    row.insert(header.to_string(), to_json_value(&record[i]));
+                    row.insert(header.to_string(), str_to_json_value(&record[i]));
                 }
             }
 
-            if row.len() > 0 {
+            let should_add = match &query.conditions {
+                Some(logical_expression) => {
+                    LogicalExpression::evaluate_conditions(&logical_expression, &row)
+                }
+                None => true,
+            };
+
+
+            if row.len() > 0 && should_add {
                 rows.push(row);
             }
         }
 
         serde_json::to_string_pretty(&rows)
-    }
-}
-
-fn to_json_value(value: &str) -> serde_json::Value {
-    match value.parse::<i64>() {
-        Ok(v) => serde_json::Value::Number(serde_json::Number::from(v)),
-        Err(_) => match value.parse::<f64>() {
-            Ok(v) => match serde_json::Number::from_f64(v) {
-                Some(n) => serde_json::Value::Number(n),
-                None => serde_json::Value::String(value.to_string()),
-            },
-            Err(_) => serde_json::Value::String(value.to_string()),
-        },
     }
 }

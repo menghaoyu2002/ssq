@@ -1,6 +1,11 @@
-use std::{collections::{HashMap, BTreeMap}, fs::File, io::BufReader, process::exit};
+use std::{
+    collections::{BTreeMap, HashMap},
+    fs::File,
+    io::BufReader,
+    process::exit,
+};
 
-use crate::parser::Query;
+use crate::parser::{LogicalExpression, Query};
 
 use super::{Executor, JsonValue};
 use calamine::{open_workbook, DataType, Range, Reader, Xlsx};
@@ -34,7 +39,7 @@ impl JsonValue for DataType {
             DataType::Int(i) => serde_json::Value::Number(serde_json::Number::from(*i)),
             DataType::Float(f) => {
                 serde_json::Value::Number(serde_json::Number::from_f64(*f).unwrap())
-            },
+            }
             DataType::String(s) => serde_json::Value::String(s.to_string()),
             DataType::DateTime(dt) => serde_json::Value::String(dt.to_string()),
             DataType::Error(e) => serde_json::Value::String(e.to_string()),
@@ -77,8 +82,12 @@ impl Executor for XlsxExecutor {
         }
 
         let mut iter = range.rows().into_iter();
-        let headers = iter.next().unwrap().iter().map(|h| h.to_string()).collect::<Vec<String>>();
-
+        let headers = iter
+            .next()
+            .unwrap()
+            .iter()
+            .map(|h| h.to_string())
+            .collect::<Vec<String>>();
 
         // verify that every column in the query exists in the sheet
         for column in &query.columns {
@@ -97,13 +106,21 @@ impl Executor for XlsxExecutor {
 
         for row in iter {
             let mut record: BTreeMap<String, serde_json::Value> = BTreeMap::new();
+            let mut full_row: BTreeMap<String, serde_json::Value> = BTreeMap::new();
             for (i, cell) in row.iter().enumerate() {
                 if query.columns.contains(&headers[i].to_string().as_str()) {
                     record.insert(headers[i].to_string(), cell.to_value());
                 }
+                full_row.insert(headers[i].to_string(), cell.to_value());
             }
 
-            if record.len() > 0 {
+            let should_include = match &query.conditions {
+                Some(logical_expression) => {
+                    LogicalExpression::evaluate_conditions(&logical_expression, &full_row)
+                }
+                None => true,
+            };
+            if record.len() > 0 && should_include {
                 rows.push(record);
             }
         }
