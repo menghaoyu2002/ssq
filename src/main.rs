@@ -34,7 +34,17 @@ fn main() {
 
     match optional_query_string {
         Some(query_string) => {
-            let (_, query) = parse_query(&query_string).unwrap();
+            let parsed = parse_query(&query_string);
+            let query = match parsed {
+                Ok((_, query)) => {
+                    query
+                }
+                Err(e) => {
+                    eprintln!("{}", e);
+                    exit(1);
+                }
+            };
+
 
             match FileType::parse_to_filetype(query.file.path.split(".").last()) {
                 Some(filetype) => {

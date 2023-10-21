@@ -12,11 +12,20 @@ pub struct CsvExecutor {
 
 impl CsvExecutor {
     pub fn new(path: &str) -> Self {
+        let file = csv::ReaderBuilder::new().has_headers(false).from_path(path);
+
+        if file.is_err() {
+            eprintln!(
+                "{} failed to open {}, {}",
+                "error:".red().bold(),
+                path.to_string().bold(),
+                file.err().unwrap()
+            );
+            exit(1);
+        }
+
         Self {
-            file: csv::ReaderBuilder::new()
-                .has_headers(false)
-                .from_path(path)
-                .unwrap(),
+            file: file.unwrap(),
         }
     }
 }
@@ -65,7 +74,6 @@ impl Executor for CsvExecutor {
                 }
                 None => true,
             };
-
 
             if row.len() > 0 && should_add {
                 rows.push(row);

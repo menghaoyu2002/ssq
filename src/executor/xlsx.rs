@@ -18,11 +18,18 @@ pub struct XlsxExecutor {
 
 impl XlsxExecutor {
     pub fn new(path: &str) -> Self {
-        let workbook: Xlsx<_> = open_workbook(path).expect(&format!(
-            "{} failed to open {}",
-            "error".red().bold(),
-            path
-        ));
+        let workbook = match open_workbook(path) {
+            Ok(wb) => wb,
+            Err(e) => {
+                eprintln!(
+                    "{} failed to open {}, {}",
+                    "error:".red().bold(),
+                    path.to_string().bold(),
+                    e
+                );
+                exit(1);
+            }
+        };
 
         Self {
             workbook,
@@ -65,16 +72,30 @@ impl Executor for XlsxExecutor {
                 .unwrap()
                 .clone();
         } else {
-            range = self
+            range = match self
                 .workbook
                 .worksheet_range(&query.file.sheet.as_ref().unwrap())
-                .expect(&format!(
-                    "{} failed to open sheet {}",
-                    "error".red().bold(),
-                    query.file.sheet.as_ref().unwrap()
-                ))
-                .unwrap();
-
+            {
+                Some(Ok(range)) => range,
+                Some(Err(e)) => {
+                    eprintln!(
+                        "{} failed to open sheet '{}', {}",
+                        "error:".red().bold(),
+                        query.file.sheet.as_ref().unwrap(),
+                        e
+                    );
+                    exit(1);
+                },
+                None => {
+                    eprintln!(
+                        "{} sheet '{}' does not exist in file '{}'",
+                        "error:".red().bold(),
+                        query.file.sheet.as_ref().unwrap(),
+                        query.file.path
+                    );
+                    exit(1);
+                }
+            };
             self.tables.insert(
                 query.file.sheet.as_ref().unwrap().to_string(),
                 range.clone(),

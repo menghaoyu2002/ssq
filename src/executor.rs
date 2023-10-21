@@ -34,6 +34,7 @@ impl LogicalExpression {
             LogicalExpression::Predicate(predicate) => {
                 let row_value = row.get(&predicate.column).unwrap();
                 let compare_to = &str_to_json_value(&predicate.value);
+
                 let left = json_to_number(row_value);
                 let right = json_to_number(compare_to);
 
@@ -61,7 +62,7 @@ impl LogicalExpression {
                     ComparisonOperator::LessThanOrEqual => match (left, right) {
                         (Some(left), Some(right)) => left <= right,
                         _ => row_value.to_string() <= compare_to.to_string(),
-                    }
+                    },
                 }
             }
             LogicalExpression::Condition(condition) => {
